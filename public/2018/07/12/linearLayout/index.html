@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>LinearLayout android:layout_weight属性用法总结 | Derik的个人博客</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="&amp;emsp;&amp;emsp;LinearLayout，很常用的一种布局，当在使用这种布局方式时，为了达到较好的屏幕适配效果，可以选择使用android:layout_weight属性。当为布局中的每个组件指定了大小和权重之后，我们的android系统如何计算各组件实际所占空间呢？">
+<meta property="og:type" content="article">
+<meta property="og:title" content="LinearLayout android:layout_weight属性用法总结">
+<meta property="og:url" content="http://yoursite.com/2018/07/12/linearLayout/index.html">
+<meta property="og:site_name" content="Derik的个人博客">
+<meta property="og:description" content="&amp;emsp;&amp;emsp;LinearLayout，很常用的一种布局，当在使用这种布局方式时，为了达到较好的屏幕适配效果，可以选择使用android:layout_weight属性。当为布局中的每个组件指定了大小和权重之后，我们的android系统如何计算各组件实际所占空间呢？">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="http://yoursite.com/2018/07/12/linearLayout/width_0.png">
+<meta property="og:image" content="http://yoursite.com/2018/07/12/linearLayout/width_match.png">
+<meta property="og:image" content="http://yoursite.com/2018/07/12/linearLayout/width_enough.png">
+<meta property="og:image" content="http://yoursite.com/2018/07/12/linearLayout/width_less.png">
+<meta property="og:updated_time" content="2018-07-12T09:01:26.975Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="LinearLayout android:layout_weight属性用法总结">
+<meta name="twitter:description" content="&amp;emsp;&amp;emsp;LinearLayout，很常用的一种布局，当在使用这种布局方式时，为了达到较好的屏幕适配效果，可以选择使用android:layout_weight属性。当为布局中的每个组件指定了大小和权重之后，我们的android系统如何计算各组件实际所占空间呢？">
+<meta name="twitter:image" content="http://yoursite.com/2018/07/12/linearLayout/width_0.png">
+  
+    <link rel="alternate" href="/atom.xml" title="Derik的个人博客" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  <link rel="stylesheet" href="/css/style.css">
+  
+
+</head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">Derik的个人博客</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="搜索"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://yoursite.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+      <div class="outer">
+        <section id="main"><article id="post-linearLayout" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2018/07/12/linearLayout/" class="article-date">
+  <time datetime="2018-07-12T09:01:27.007Z" itemprop="datePublished">2018-07-12</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      LinearLayout android:layout_weight属性用法总结
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>&emsp;&emsp;<code>LinearLayout</code>，很常用的一种布局，当在使用这种布局方式时，为了达到较好的屏幕适配效果，可以选择使用<code>android:layout_weight</code>属性。当为布局中的每个组件指定了大小和权重之后，我们的android系统如何计算各组件实际所占空间呢？<br><a id="more"></a><br>贴个自己常用的计算方法：<br><strong>实际大小=指定大小+（屏幕大小-（所有组件大小的和））*权重比例。</strong></p>
+<p>用一屏幕的大小减去所有组件大小的和，得到剩余大小，或理解为可分配空间，该值可为负。然后用我们给某个组件设定的值，加上其在剩余大小中按比例计算后的值，就是该组件最后的实际大小。<br>可用空间=屏幕大小-所有组件大小的和，<br>实际大小=指定大小+可用空间*权重比例，<br>所以最后为：<br>实际大小=指定大小+（屏幕大小-（所有组件大小的和））*权重比例。</p>
+<p>示例:<br>以<code>android:layout_width</code>为例，验证计算方式（屏幕宽度：L）<br>在<code>LinearLayout</code>中放置三个按钮，分别为Button1，Button2，Button3，<code>android:layout_height=&quot;wrap_content&quot;</code>均指定为包裹内容，每个Button的<code>android:layout_weight</code>分别为1，2，3。</p>
+<p>依据<code>android:layout_width</code>属性的设置，分三种情况：</p>
+<ol>
+<li><p><code>android:layout_width=&quot;0dp&quot;</code>时：<br>组件大小=0+（L-（0+0+0））*权重比例，组件大小和权重成正比。<br>各Button占的宽度：<br>Button1=0+(L-(0+0+0))*(1/6)，为1/6L；<br>Button2=0+(L-(0+0+0))*(2/6)，为2/6L；<br>Button3=0+(L-(0+0+0))*(3/6)，为3/6L。<br>所以Button1:Button2:Button3 = 1:2:3。</p>
+<p> <img src="/2018/07/12/linearLayout/width_0.png" alt="layout_width=&quot;0dp&quot;" title="0 dp"></p>
+</li>
+<li><p><code>android:layout_width=&quot;match_parent&quot;</code>时：<br>组件大小=L+（L-（L+L+L））*权重比例，组件大小和权重成反比。<br>如果前面组件已经占满屏幕，则剩余组件无法获得空间，不可见。<br>各Button占的宽度：<br>每个Button的<code>layout_width</code>指定为<code>match_parent</code>，即表示每个Button指定大小为父组件宽度，即L。<br>Button1=L+(L-(L+L+L))*(1/6)，为4/6L；<br>Button2=L+(L-(L+L+L))*(2/6)，为2/6L；<br>Button3=L+L(L-(L+L+L))*(3/6)，为0。<br>所以Button1:Button2=2:1，Button3不可见。</p>
+<p> <img src="/2018/07/12/linearLayout/width_match.png" alt="layout_width=&quot;match_parent&quot;" title="match_parent"></p>
+</li>
+</ol>
+<ol start="3">
+<li><p><code>android:layout_width=&quot;wrap_content&quot;</code>时：<br>组件大小=所需大小+(L-各组件所需大小和)*权重比例，剩余大小即(L-各组件所需大小和)为正，则为正比，否则为反比。<br>该情况和组件内容占用大小有关，所以布局上并不是很明显的比例关系，因为比例关系仅指剩余大小的比例：<br> 剩余大小为正，即屏幕空间足够，所占空间和权重成正比。<br> <img src="/2018/07/12/linearLayout/width_enough.png" alt="layout_width=&quot;wrap_content&quot; enough" title="wrap_content enough"></p>
+<p> 剩余大小为负，即屏幕空间不足，所占空间和权重成反比，下面的图可能有点难看，希望想表达的意思到了。<br> <img src="/2018/07/12/linearLayout/width_less.png" alt="layout_width=&quot;wrap_content&quot; less" title="wrap_content less"></p>
+</li>
+</ol>
+<p><code>LinearLayout</code>的<code>android:layout_weight</code>属性用起来很简单，但是如果想深入理解其原理，就需要参考源代码了。</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2018/07/12/linearLayout/" data-id="cjjibsf1m00017rfsolmema5k" class="article-share-link">Share</a>
+      
+      
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+  
+    <a href="/2018/07/12/hello-world/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">Hello World</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+
+  
+  <!-- 来必力City版安装代码 -->
+<div id="lv-container" data-id="city" data-uid="MTAyMC8zNTU4Mi8xMjExOA==">
+<script type="text/javascript">
+   (function(d, s) {
+       var j, e = d.getElementsByTagName(s)[0];
+
+       if (typeof LivereTower === 'function') { return; }
+
+       j = d.createElement(s);
+       j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+       j.async = true;
+
+       e.parentNode.insertBefore(j, e);
+   })(document, 'script');
+</script>
+<noscript>为正常使用来必力评论功能请激活JavaScript</noscript>
+</div>
+<!-- City版安装代码已完成 -->
+
+  
+
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+
+  
+    
+
+  
+    
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">归档</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/07/">七月 2018</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">最新文章</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2018/07/12/linearLayout/">LinearLayout android:layout_weight属性用法总结</a>
+          </li>
+        
+          <li>
+            <a href="/2018/07/12/hello-world/">Hello World</a>
+          </li>
+        
+          <li>
+            <a href="/2018/07/12/java8/">Java8的几个重要特性介绍</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2018 DerikLPW<br>
+      Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+</nav>
+    
+
+<script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/script.js"></script>
+
+  </div>
+</body>
+</html>
