@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>Android 7.1.2源码之修改开机动画 | Derik的个人博客</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="&amp;emsp;&amp;emsp;开机动画是Android系统的UI启动过程中的动画显示，在UI启动完成，看到桌面或者锁屏界面出现后，自动结束。对开机动画的定制比较简单，制作图片就可以完成。开机动画执行者代码路径为：frameworks/base/cmds/bootanimation。它将生成本地程序bootanimation，被init通过init.rc启动。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Android 7.1.2源码之修改开机动画">
+<meta property="og:url" content="http://yoursite.com/2018/07/21/Android_7.1.2_boot_anim/index.html">
+<meta property="og:site_name" content="Derik的个人博客">
+<meta property="og:description" content="&amp;emsp;&amp;emsp;开机动画是Android系统的UI启动过程中的动画显示，在UI启动完成，看到桌面或者锁屏界面出现后，自动结束。对开机动画的定制比较简单，制作图片就可以完成。开机动画执行者代码路径为：frameworks/base/cmds/bootanimation。它将生成本地程序bootanimation，被init通过init.rc启动。">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2018-07-21T10:46:57.902Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Android 7.1.2源码之修改开机动画">
+<meta name="twitter:description" content="&amp;emsp;&amp;emsp;开机动画是Android系统的UI启动过程中的动画显示，在UI启动完成，看到桌面或者锁屏界面出现后，自动结束。对开机动画的定制比较简单，制作图片就可以完成。开机动画执行者代码路径为：frameworks/base/cmds/bootanimation。它将生成本地程序bootanimation，被init通过init.rc启动。">
+  
+    <link rel="alternate" href="/atom.xml" title="Derik的个人博客" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  <link rel="stylesheet" href="/css/style.css">
+  
+
+</head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">Derik的个人博客</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="搜索"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://yoursite.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+      <div class="outer">
+        <section id="main"><article id="post-Android_7.1.2_boot_anim" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2018/07/21/Android_7.1.2_boot_anim/" class="article-date">
+  <time datetime="2018-07-21T10:46:57.938Z" itemprop="datePublished">2018-07-21</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      Android 7.1.2源码之修改开机动画
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>&emsp;&emsp;开机动画是Android系统的UI启动过程中的动画显示，在UI启动完成，看到桌面或者锁屏界面出现后，自动结束。对开机动画的定制比较简单，制作图片就可以完成。开机动画执行者代码路径为：frameworks/base/cmds/bootanimation。它将生成本地程序bootanimation，被init通过init.rc启动。<br><a id="more"></a><br><strong>开机动画的两种内容：</strong></p>
+<ol>
+<li>zip包。<br> /system/media/bootanimation-encrypted.zip<br> /system/media/bootanimation.zip<br> /oem/media/bootanimation.zip<br>以上任意一种，放置OK后，重新make生成img。</li>
+<li>默认动画。<br>默认动画是资源包中的资产文件，路径为：frameworks/base/core/res/assets/images。默认动画的两个文件为android-logo-mask.png和andriod-logo-shine.png。<br>默认动画的运行逻辑是：有透明区域mask文件放在上面，shine文件放在下面水平方向移动。这两个文件可以被替换实现定制。<br>优先使用的是特定格式的zip包，如果不能成功，则使用默认的动画。至于bootanimation.zip里边的格式，很多书或者帖子都有讲，感觉不是很全，下面贴上源码中的格式。</li>
+</ol>
+<h1 id="bootanimation-format"><a href="#bootanimation-format" class="headerlink" title="bootanimation format"></a>bootanimation format</h1><h2 id="zipfile-paths"><a href="#zipfile-paths" class="headerlink" title="zipfile paths"></a>zipfile paths</h2><p>The system selects a boot animation zipfile from the following locations, in order:</p>
+<pre><code>/system/media/bootanimation-encrypted.zip (if getprop(&quot;vold.decrypt&quot;) = &apos;1&apos;)
+/system/media/bootanimation.zip
+/oem/media/bootanimation.zip
+</code></pre><h2 id="zipfile-layout"><a href="#zipfile-layout" class="headerlink" title="zipfile layout"></a>zipfile layout</h2><p>The <code>bootanimation.zip</code> archive file includes:</p>
+<pre><code>desc.txt - a text file
+part0  \
+part1   \  directories full of PNG frames
+...     /
+partN  /
+</code></pre><h2 id="desc-txt-format"><a href="#desc-txt-format" class="headerlink" title="desc.txt format"></a>desc.txt format</h2><p>The first line defines the general parameters of the animation:</p>
+<pre><code>WIDTH HEIGHT FPS
+</code></pre><ul>
+<li><strong>WIDTH:</strong> animation width (pixels)</li>
+<li><strong>HEIGHT:</strong> animation height (pixels)</li>
+<li><strong>FPS:</strong> frames per second, e.g. 60</li>
+</ul>
+<p>It is followed by a number of rows of the form:</p>
+<pre><code>TYPE COUNT PAUSE PATH [#RGBHEX CLOCK]
+</code></pre><ul>
+<li><strong>TYPE:</strong> a single char indicating what type of animation segment this is:<ul>
+<li><code>p</code> – this part will play unless interrupted by the end of the boot</li>
+<li><code>c</code> – this part will play to completion, no matter what</li>
+</ul>
+</li>
+<li><strong>COUNT:</strong> how many times to play the animation, or 0 to loop forever until boot is complete</li>
+<li><strong>PAUSE:</strong> number of FRAMES to delay after this part ends</li>
+<li><strong>PATH:</strong> directory in which to find the frames for this part (e.g. <code>part0</code>)</li>
+<li><strong>RGBHEX:</strong> <em>(OPTIONAL)</em> a background color, specified as <code>#RRGGBB</code></li>
+<li><strong>CLOCK:</strong> <em>(OPTIONAL)</em> the y-coordinate at which to draw the current time (for watches)</li>
+</ul>
+<p>There is also a special TYPE, <code>$SYSTEM</code>, that loads <code>/system/media/bootanimation.zip</code><br>and plays that.</p>
+<h2 id="loading-and-playing-frames"><a href="#loading-and-playing-frames" class="headerlink" title="loading and playing frames"></a>loading and playing frames</h2><p>Each part is scanned and loaded directly from the zip archive. Within a part directory, every file<br>(except <code>trim.txt</code> and <code>audio.wav</code>; see next sections) is expected to be a PNG file that represents<br>one frame in that part (at the specified resolution). For this reason it is important that frames be<br>named sequentially (e.g. <code>part000.png</code>, <code>part001.png</code>, …) and added to the zip archive in that<br>order.</p>
+<h2 id="trim-txt"><a href="#trim-txt" class="headerlink" title="trim.txt"></a>trim.txt</h2><p>To save on memory, textures may be trimmed by their background color.  trim.txt sequentially lists<br>the trim output for each frame in its directory, so the frames may be properly positioned.<br>Output should be of the form: <code>WxH+X+Y</code>. Example:</p>
+<pre><code>713x165+388+914
+708x152+388+912
+707x139+388+911
+649x92+388+910
+</code></pre><p>If the file is not present, each frame is assumed to be the same size as the animation.</p>
+<h2 id="audio-wav"><a href="#audio-wav" class="headerlink" title="audio.wav"></a>audio.wav</h2><p>Each part may optionally play a <code>wav</code> sample when it starts. To enable this, add a file<br>with the name <code>audio.wav</code> in the part directory.</p>
+<h2 id="exiting"><a href="#exiting" class="headerlink" title="exiting"></a>exiting</h2><p>The system will end the boot animation (first completing any incomplete or even entirely unplayed<br>parts that are of type <code>c</code>) when the system is finished booting. (This is accomplished by setting<br>the system property <code>service.bootanim.exit</code> to a nonzero string.)</p>
+<h2 id="protips"><a href="#protips" class="headerlink" title="protips"></a>protips</h2><h3 id="PNG-compression"><a href="#PNG-compression" class="headerlink" title="PNG compression"></a>PNG compression</h3><p>Use <code>zopflipng</code> if you have it, otherwise <code>pngcrush</code> will do. e.g.:</p>
+<pre><code>for fn in *.png ; do
+    zopflipng -m ${fn}s ${fn}s.new &amp;&amp; mv -f ${fn}s.new ${fn}
+    # or: pngcrush -q ....
+done
+</code></pre><p>Some animations benefit from being reduced to 256 colors:</p>
+<pre><code>pngquant --force --ext .png *.png
+# alternatively: mogrify -colors 256 anim-tmp/*/*.png
+</code></pre><h3 id="creating-the-ZIP-archive"><a href="#creating-the-ZIP-archive" class="headerlink" title="creating the ZIP archive"></a>creating the ZIP archive</h3><pre><code>cd &lt;path-to-pieces&gt;
+zip -0qry -i \*.txt \*.png \*.wav @ ../bootanimation.zip *.txt part*
+</code></pre><p>Note that the ZIP archive is not actually compressed! The PNG files are already as compressed<br>as they can reasonably get, and there is unlikely to be any redundancy between files.</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2018/07/21/Android_7.1.2_boot_anim/" data-id="cjllstdas0000idfs1awr6tmw" class="article-share-link">Share</a>
+      
+      
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2018/08/02/Android_DispatchMotionEvent/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Newer</strong>
+      <div class="article-nav-title">
+        
+          Android事件分发机制（一）
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2018/07/17/Ubuntu_14.04_Android_7.1.2_env_config/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">Ubuntu 14.04 Android 7.1.2源码编译</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+
+  
+  <!-- 来必力City版安装代码 -->
+<div id="lv-container" data-id="city" data-uid="MTAyMC8zNTU4Mi8xMjExOA==">
+<script type="text/javascript">
+   (function(d, s) {
+       var j, e = d.getElementsByTagName(s)[0];
+
+       if (typeof LivereTower === 'function') { return; }
+
+       j = d.createElement(s);
+       j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+       j.async = true;
+
+       e.parentNode.insertBefore(j, e);
+   })(document, 'script');
+</script>
+<noscript>为正常使用来必力评论功能请激活JavaScript</noscript>
+</div>
+<!-- City版安装代码已完成 -->
+
+  
+
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+
+  
+    
+
+  
+    
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">归档</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/09/">九月 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/08/">八月 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/07/">七月 2018</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">最新文章</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2018/09/03/Framework_jni_1/">Android Framework层的JNI机制（一）</a>
+          </li>
+        
+          <li>
+            <a href="/2018/08/04/Android_DispatchMotionEvent2/">Android事件分发机制（二）</a>
+          </li>
+        
+          <li>
+            <a href="/2018/08/02/Android_DispatchMotionEvent/">Android事件分发机制（一）</a>
+          </li>
+        
+          <li>
+            <a href="/2018/07/21/Android_7.1.2_boot_anim/">Android 7.1.2源码之修改开机动画</a>
+          </li>
+        
+          <li>
+            <a href="/2018/07/17/Ubuntu_14.04_Android_7.1.2_env_config/">Ubuntu 14.04 Android 7.1.2源码编译</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2018 DerikLPW<br>
+      Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+</nav>
+    
+
+<script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/script.js"></script>
+
+  </div>
+</body>
+</html>

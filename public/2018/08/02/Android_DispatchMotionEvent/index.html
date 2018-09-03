@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>Android事件分发机制（一） | Derik的个人博客</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="事件分发机制有点复杂，而且似乎笼罩着一层神秘的面纱。为了揭开它，决定进去源码里面看一看，并把过程记录下来，作为一份笔记。如果对大家理解事件分发机制有所帮助，那是再好不过的事情。首先，将稍微整理事件分发机制中，需要理清的几个问题，然后才开始看源码。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Android事件分发机制（一）">
+<meta property="og:url" content="http://yoursite.com/2018/08/02/Android_DispatchMotionEvent/index.html">
+<meta property="og:site_name" content="Derik的个人博客">
+<meta property="og:description" content="事件分发机制有点复杂，而且似乎笼罩着一层神秘的面纱。为了揭开它，决定进去源码里面看一看，并把过程记录下来，作为一份笔记。如果对大家理解事件分发机制有所帮助，那是再好不过的事情。首先，将稍微整理事件分发机制中，需要理清的几个问题，然后才开始看源码。">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2018-08-02T10:34:19.674Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Android事件分发机制（一）">
+<meta name="twitter:description" content="事件分发机制有点复杂，而且似乎笼罩着一层神秘的面纱。为了揭开它，决定进去源码里面看一看，并把过程记录下来，作为一份笔记。如果对大家理解事件分发机制有所帮助，那是再好不过的事情。首先，将稍微整理事件分发机制中，需要理清的几个问题，然后才开始看源码。">
+  
+    <link rel="alternate" href="/atom.xml" title="Derik的个人博客" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  <link rel="stylesheet" href="/css/style.css">
+  
+
+</head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">Derik的个人博客</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="搜索"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://yoursite.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+      <div class="outer">
+        <section id="main"><article id="post-Android_DispatchMotionEvent" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2018/08/02/Android_DispatchMotionEvent/" class="article-date">
+  <time datetime="2018-08-02T10:34:19.714Z" itemprop="datePublished">2018-08-02</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      Android事件分发机制（一）
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>事件分发机制有点复杂，而且似乎笼罩着一层神秘的面纱。为了揭开它，决定进去源码里面看一看，并把过程记录下来，作为一份笔记。如果对大家理解事件分发机制有所帮助，那是再好不过的事情。首先，将稍微整理事件分发机制中，需要理清的几个问题，然后才开始看源码。<br><a id="more"></a></p>
+<h1 id="关于事件分发的几个问题"><a href="#关于事件分发的几个问题" class="headerlink" title="关于事件分发的几个问题"></a>关于事件分发的几个问题</h1><ol>
+<li>为什么要进行事件分发？</li>
+</ol>
+<p>用户在Android系统屏幕上进行操作后，会有相应的事件产生。当产生事件的区域，有多个组件可以响应这个事件时，Android系统需要事件分发机制，来决定该事件传递给哪一个组件进行处理。</p>
+<ol start="2">
+<li>什么是事件分发？</li>
+</ol>
+<p>是指Android系统对用户行为产生的事件，进行传递处理的过程。</p>
+<ol start="3">
+<li>事件分发指的是什么事件？</li>
+</ol>
+<p>用户操作行为所产生的MotionEvent事件，具体可以是：ACTION_DOWN, ACTION_UP, ACTION_MOVE, ACTION_CANCEL等。</p>
+<ol start="4">
+<li>如何进行事件分发？</li>
+</ol>
+<p>采用责任链式的设计模式，事件层层传递，从上往下，再从下往上，寻找最终消费事件的组件，未找到，则将该次事件丢弃。</p>
+<h1 id="事件分发详解"><a href="#事件分发详解" class="headerlink" title="事件分发详解"></a>事件分发详解</h1><p>事件分发的主体主要是ViewGroup和View，虽然ViewGroup也是继承自View，但是在事件的处理上ViewGroup和View所需要考虑的因素不同，处理过程有所不同，因为ViewGroup除了要考虑自己，还需要考虑其中的各个子View。至于Activity，理解了ViewGroup事件分发，Activity差不多也通了。所以，将事件分发分为两类进行分析：</p>
+<p>（1） ViewGroup的事件分发。</p>
+<p>（2） View的事件分发。</p>
+<h3 id="ViewGroup事件分发"><a href="#ViewGroup事件分发" class="headerlink" title="ViewGroup事件分发"></a>ViewGroup事件分发</h3><p>ViewGroup事件分发主要涉及到以下三个方法：</p>
+<p>（1）public boolean dispatchTouchEvent(MotionEvent ev)。</p>
+<p>（2）public boolean onInterceptTouchEvent(MotionEvent ev)。</p>
+<p>（3）public boolean onTouchEvent(MotionEvent ev)。</p>
+<p>其中的核心方法是dispatchTouchEvent()，所以从这个方法开始分析。onInterceptTouchEvent()会在dispatchTouchEvent()的执行过程中被调用。onTouchEvent()是ViewGroup父类View的方法，只有当ViewGroup被当成View进行事件分发的时候，才会被调用。</p>
+<p>ViewGroup被当成View进行事件分发的情况：</p>
+<p>（1）ViewGroup对事件进行了拦截。</p>
+<p>（2）事件发生在没有子View的区域。</p>
+<p>（3）ViewGroup中所有子View未消费事件，事件被回给了ViewGroup。</p>
+<p>开始贴源码，抓关键点进行分析与理解。我们先在源码ViewGroup.java类中，找到public boolean dispatchTouchEvent(MotionEvent ev)这个函数，按从上往下顺序看这个方法。</p>
+<ol>
+<li><p>获取事件后，初始化相关变量，并判断是否进行了拦截<br>找到dispatchTouchEvent()这个方法后，我们可以先看到下面这几行代码。本来想多贴一点，但是贴在这里密密麻麻，容易让人产生恐惧，而且找不到重点。所以，只贴关键的几行。后面也基本这样，每个重要的地方，只挑关键的几行代码贴出来，并加以说明。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">cancelAndClearTouchTargets(ev);</span><br><span class="line">resetTouchState();</span><br></pre></td></tr></table></figure>
+<p> 这两行是取消和清除上一次事件，并重置相关的变量。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">intercepted = onInterceptTouchEvent(ev);</span><br></pre></td></tr></table></figure>
+<p> 这一行主要在检测ViewGtoup有没有拦截事件。onInterceptTouchEvent()方法，依据它的执行结果，改变intercepted标志的值，这个值将作为事件是否分发给子View的依据。而onInterceptTouchEvent()方法里的代码如下：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">public boolean onInterceptTouchEvent(MotionEvent ev) &#123;</span><br><span class="line">    <span class="keyword">if</span> (ev.isFromSource(InputDevice.SOURCE_MOUSE)</span><br><span class="line">            &amp;&amp; ev.getAction() == MotionEvent.ACTION_DOWN</span><br><span class="line">            &amp;&amp; ev.isButtonPressed(MotionEvent.BUTTON_PRIMARY)</span><br><span class="line">            &amp;&amp; isOnScrollbarThumb(ev.getX(), ev.getY())) &#123;</span><br><span class="line">        <span class="keyword">return</span> true;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> false;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+<p>这几行是这个方法的所有代码，在开发的时候，可以重写这个方法，进行事件拦截。重写这个方法，让它返回true，表示不分发事件给子View，ViewGroup会被当成View进行事件分发。当intercepted为false时，它后面一大块和子View相关的代码才会被执行。</p>
+<ol start="2">
+<li><p>判断是否取消了这次事件</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">// Check <span class="keyword">for</span> cancelation.</span><br><span class="line">final boolean canceled = resetCancelNextUpFlag(this)</span><br><span class="line">        || actionMasked == MotionEvent.ACTION_CANCEL;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>未被拦截，并且未取消</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (!canceled &amp;&amp; !intercepted) &#123;</span><br><span class="line">// 省略</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+<p>当if (!canceled &amp;&amp; !intercepted)条件满足的时候，开始处理ViewGroup里面的组件。</p>
+<ol start="4">
+<li>拿到事件发生位置的点坐标<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">final float x = ev.getX(actionIndex);</span><br><span class="line">final float y = ev.getY(actionIndex);</span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+<p>这个地方先拿到坐标，是为了后面判断子View有没有进行事件分发的条件。</p>
+<ol start="5">
+<li>收集子View<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">final ArrayList&lt;View&gt; preorderedList = buildTouchDispatchChildList();</span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+<p>buildTouchDispatchChildList()这个方法，它返回了一个List集合。这个集合里面装着，按Z轴方向从小到大排序的所有子View，即Z值较大的子View放在这个List的后面。</p>
+<ol start="6">
+<li>遍历ViewGroup里的子View<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">for</span> (int i = childrenCount - <span class="number">1</span>; i &gt;= <span class="number">0</span>; i--) &#123;</span><br><span class="line">//省略</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+<p>上一步已经拿到了一个按Z轴从小到大排好序的子View集合。这里遍历的时候是从后往前，所以，先处理List最后面的子View，即布局中盖在最上面的那个子View。</p>
+<ol start="7">
+<li>检测当前拿到的子View是不是处在事件产生的位置<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (!canViewReceivePointerEvents(child)</span><br><span class="line">         || !isTransformedTouchPointInView(x, y, child, null)) &#123;</span><br><span class="line">   ev.setTargetAccessibilityFocus(false);</span><br><span class="line">   <span class="keyword">continue</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+<p>先检测能否能接受事件，并且和前面拿到的点坐标结合，判断当前遍历到的这个View是否包含这个点坐标。不能接受事件或不包含事件的点坐标，continue，跳过后面的代码，开始下一次循环。如果子View包含这个坐标点的话，帮子View包装一下，赋值给newTouchTarget，然后break，跳出循环，不再处理剩下的子View。因为它表示当前View正在接收处理事件，不需要继续分发给其他View。</p>
+<p>那么，事件发生的点坐标在非子View和子View区域时，ViewGroup分别做了什么？</p>
+<p>（1）事件的点坐标在非子View区域<br>遍历所有子View，发现它们都不在事件发生点的位置，for循环里后面的代码都不会执行。最终清空了一下装子View的List，跳出了if (!canceled &amp;&amp; !intercepted)后面的语句块，而到了下面这里。<br><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">// Dispatch to touch targets.</span><br><span class="line"><span class="keyword">if</span> (mFirstTouchTarget == null) &#123;</span><br><span class="line">    // No touch targets so treat this <span class="keyword">as</span> an ordinary view.</span><br><span class="line">    handled = dispatchTransformedTouchEvent(ev, canceled, null,</span><br><span class="line">            TouchTarget.ALL_POINTER_IDS);</span><br><span class="line">&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">//省略</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>mFirstTouchTarget为空，表示没有子View能处理这个事件，而开始执行dispatchTransformedTouchEvent()方法，child的入参为null。<br>其中关键的代码如下：<br><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (child == null) &#123;</span><br><span class="line">    handled = super.dispatchTouchEvent(transformedEvent);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>可以看到，child为空的时候，调用了super.dispatchTouchEvent()，即ViewGroup父类的dispatchTouchEvent()，而ViewGroup的父类是View。此时，ViewGroup被当成了一个View进行事件分发。</p>
+<p>（2）事件点坐标在子View区域<br>事件点坐标在子View区域时，继续循环里面的代码：<br><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span>(dispatchTransformedTouchEvent(ev, false, child, idBitsToAssign)) &#123;</span><br><span class="line">//省略</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>调用dispatchTransformedTouchEvent()方法后，会执行里面的下面这部分代码：<br><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (child == null || child.hasIdentityMatrix()) &#123;</span><br><span class="line">    <span class="keyword">if</span> (child == null) &#123;</span><br><span class="line">        handled = super.dispatchTouchEvent(event);</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        final float offsetX = mScrollX - child.mLeft;</span><br><span class="line">        final float offsetY = mScrollY - child.mTop;</span><br><span class="line">        event.offsetLocation(offsetX, offsetY);</span><br><span class="line"></span><br><span class="line">        handled = child.dispatchTouchEvent(event);</span><br><span class="line"></span><br><span class="line">        event.offsetLocation(-offsetX, -offsetY);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> handled;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>其中child对象，就是我们当前处理的这个子View。人家有料，所以handled = child.dispatchTouchEvent(event)会执行，开始了它的事件分发，这里也涉及到了View的事件分发，后面再单独介绍。这个事件如果被这个子View消费了，事件传递结束，它下面的其他子View也就没什么事。因为dispatchTransformedTouchEvent()返回值为true的话，break，退出了for循环，后边的子View没有机会。如果返回值为false，那表示当前的活（事件）这个子View干不了，换下一个。如果事件点坐标位置的所有子View都不消费事件，也会执行如下代码：<br><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">// Dispatch to touch targets.</span><br><span class="line"><span class="keyword">if</span> (mFirstTouchTarget == null) &#123;</span><br><span class="line">    // No touch targets so treat this <span class="keyword">as</span> an ordinary view.</span><br><span class="line">    handled = dispatchTransformedTouchEvent(ev, canceled, null,</span><br><span class="line">            TouchTarget.ALL_POINTER_IDS);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>这时候和事件发生在ViewGroup的非子View区域时一样，执行了相同的代码块，把ViewGroup当成View来进行事件分发。值得注意的是，此时，这些子View已经进行过分发事件，即它们都会调用各自的dispatchTouchEvent()方法，只是都没有消费事件。</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2018/08/02/Android_DispatchMotionEvent/" data-id="cjllstdb40004idfsiwf4ej8f" class="article-share-link">Share</a>
+      
+      
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2018/08/04/Android_DispatchMotionEvent2/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Newer</strong>
+      <div class="article-nav-title">
+        
+          Android事件分发机制（二）
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2018/07/21/Android_7.1.2_boot_anim/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">Android 7.1.2源码之修改开机动画</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+
+  
+  <!-- 来必力City版安装代码 -->
+<div id="lv-container" data-id="city" data-uid="MTAyMC8zNTU4Mi8xMjExOA==">
+<script type="text/javascript">
+   (function(d, s) {
+       var j, e = d.getElementsByTagName(s)[0];
+
+       if (typeof LivereTower === 'function') { return; }
+
+       j = d.createElement(s);
+       j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+       j.async = true;
+
+       e.parentNode.insertBefore(j, e);
+   })(document, 'script');
+</script>
+<noscript>为正常使用来必力评论功能请激活JavaScript</noscript>
+</div>
+<!-- City版安装代码已完成 -->
+
+  
+
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+
+  
+    
+
+  
+    
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">归档</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/09/">九月 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/08/">八月 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/07/">七月 2018</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">最新文章</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2018/09/03/Framework_jni_1/">Android Framework层的JNI机制（一）</a>
+          </li>
+        
+          <li>
+            <a href="/2018/08/04/Android_DispatchMotionEvent2/">Android事件分发机制（二）</a>
+          </li>
+        
+          <li>
+            <a href="/2018/08/02/Android_DispatchMotionEvent/">Android事件分发机制（一）</a>
+          </li>
+        
+          <li>
+            <a href="/2018/07/21/Android_7.1.2_boot_anim/">Android 7.1.2源码之修改开机动画</a>
+          </li>
+        
+          <li>
+            <a href="/2018/07/17/Ubuntu_14.04_Android_7.1.2_env_config/">Ubuntu 14.04 Android 7.1.2源码编译</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2018 DerikLPW<br>
+      Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+</nav>
+    
+
+<script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/script.js"></script>
+
+  </div>
+</body>
+</html>

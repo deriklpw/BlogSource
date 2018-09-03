@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>Android Framework层的JNI机制（一） | Derik的个人博客</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="JNI（Java Native Interface）Java本地接口。最初对JNI的了解，仅仅停留在Java通过JNI可以实现对C/C++函数的调用。比如，首先在Java中写好native方法。然后在C或C++中文件中，定义一个对应的函数，在这个函数中，实现自己的代码或者调用其他的标准库。最后加载一下生成的动态库，便可以开始使用这个native方法。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Android Framework层的JNI机制（一）">
+<meta property="og:url" content="http://yoursite.com/2018/09/03/Framework_jni_1/index.html">
+<meta property="og:site_name" content="Derik的个人博客">
+<meta property="og:description" content="JNI（Java Native Interface）Java本地接口。最初对JNI的了解，仅仅停留在Java通过JNI可以实现对C/C++函数的调用。比如，首先在Java中写好native方法。然后在C或C++中文件中，定义一个对应的函数，在这个函数中，实现自己的代码或者调用其他的标准库。最后加载一下生成的动态库，便可以开始使用这个native方法。">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2018-09-03T03:58:00.141Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Android Framework层的JNI机制（一）">
+<meta name="twitter:description" content="JNI（Java Native Interface）Java本地接口。最初对JNI的了解，仅仅停留在Java通过JNI可以实现对C/C++函数的调用。比如，首先在Java中写好native方法。然后在C或C++中文件中，定义一个对应的函数，在这个函数中，实现自己的代码或者调用其他的标准库。最后加载一下生成的动态库，便可以开始使用这个native方法。">
+  
+    <link rel="alternate" href="/atom.xml" title="Derik的个人博客" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  <link rel="stylesheet" href="/css/style.css">
+  
+
+</head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">Derik的个人博客</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="搜索"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://yoursite.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+      <div class="outer">
+        <section id="main"><article id="post-Framework_jni_1" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2018/09/03/Framework_jni_1/" class="article-date">
+  <time datetime="2018-09-03T03:58:00.173Z" itemprop="datePublished">2018-09-03</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      Android Framework层的JNI机制（一）
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>JNI（Java Native Interface）Java本地接口。最初对JNI的了解，仅仅停留在Java通过JNI可以实现对C/C++函数的调用。比如，首先在Java中写好native方法。然后在C或C++中文件中，定义一个对应的函数，在这个函数中，实现自己的代码或者调用其他的标准库。最后加载一下生成的动态库，便可以开始使用这个native方法。<a id="more"></a>像是在照葫芦画瓢，知其然，不知其所以然。最近在看Framework层中JNI相关的代码，加上网上大咖的神贴，综合理解，先以Framework中Log为研究对象，分析JNI在其中的使用。</p>
+<h1 id="概要"><a href="#概要" class="headerlink" title="概要"></a>概要</h1><ul>
+<li><strong>JNI机制基本要点</strong></li>
+<li><strong>Android中JNI的存在方式</strong></li>
+<li><strong>Framework层Log的JNI使用</strong></li>
+</ul>
+<h1 id="一、JNI机制基本要点"><a href="#一、JNI机制基本要点" class="headerlink" title="一、JNI机制基本要点"></a>一、JNI机制基本要点</h1><p>用过JNI的工程师，都接触过下面这些知识点：</p>
+<ul>
+<li>JavaVM：表示Java虚拟机。</li>
+<li>JNIEnv：表示JNI环境的上下文，例如注册、查找类、异常等。</li>
+<li>jclass：在JNI中表示的Java类。</li>
+<li>jmethodID：在JNI中表示的Java类中的方法。</li>
+<li>jfiledID：在JNI中表示IDEJava类中的属性。</li>
+<li>线程：JNI中通过AttachCurrentThread和DetachCurrentThread方法，实现和Java线程的结合。</li>
+</ul>
+<p>它们都在一个叫jni.h的头文件头文件，这个头文件是JNI机制中很重要的一个头文件。<br>源代码路径：<code>/libnativehelper/include/nativehelper/jni.h</code>。</p>
+<p>在libnativehelper目录下的源文件，编译后会生成一个libnativehelper.so的动态库。其实，jni.h是Android根据Java本地调用的标准写成的一个头文件，在它里面包括了基本类型（类型的映射），以及JavaVM，JNIEnv，jclass，jmethodID，jfiledID等数据结构的定义。</p>
+<p>JavaVM对应于jni.h中JNIInvokeInterface结构体，表示虚拟机。JNIEnv对应于JNINativeInterface结构体，表示JNI的环境。在JNI的使用过程中，所调用的功能大都来自JNINativeInterface结构体。例如，处理Java属性和方法的查找，Java属性的访问，Java方法的调用等功能。另外，在JNINativeInterface结构体中，涉及到的一个JNINativeMethod结构体，它表示在本地实现的一个方法，即native方法，后面进行JNI注册的时候会用到。</p>
+<h1 id="二、Android中JNI的存在方式"><a href="#二、Android中JNI的存在方式" class="headerlink" title="二、Android中JNI的存在方式"></a>二、Android中JNI的存在方式</h1><p>Android中JNI的存在方式主要分两种： 框架层和应用层的JNI使用。不对应用层的使用情况进行介绍，主要目的还是看看框架层里面的JNI。<br>在Android框架中，JNI库是一些普通的本地动态库，被放置在目标系统的/system/lib目录中。<br>Java框架层，最主要的JNI内容源代码路径为：<code>/frameworks/base/core/jni</code>。<br>这里面的代码会生成一个libandroid_runtiem.so的动态库。接下来要分析的Log中JNI的使用，就在这个目录之中。</p>
+<h1 id="三、Framework层Log相关"><a href="#三、Framework层Log相关" class="headerlink" title="三、Framework层Log相关"></a>三、Framework层Log相关</h1><ol>
+<li><p><strong>Java框架层的Log</strong><br>在编程的时候，大家都用过Log，其实这个我们经常使用的Log工具，在Java框架层最终调用的是native方法。<br>贴上源码的路径：<code>/frameworks/base/core/java/android/util/Log.java</code>。<br>如果感兴趣，可以进去瞧一瞧。咱们以Log.java中的println_native()这个本地方法，进行分析。</p>
+</li>
+<li><p><strong>Log的JNI实现</strong><br>Log的JNI的实现是在一个叫<code>android_util_Log.cpp</code>的源文件中。<br>源码路径：<br>头文件：<code>/frameworks/base/core/jni/android_util_Log.h</code>。<br>源文件：<code>/frameworks/base/core/jni/android_util_Log.cpp</code>。</p>
+</li>
+</ol>
+<p>在android_util_Log.cpp源文件中，我们可以找到println_native的身影。<br><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">/*</span><br><span class="line"> * JNI registration.</span><br><span class="line"> */</span><br><span class="line">static const JNINativeMethod gMethods[] = &#123;</span><br><span class="line">    /* name, signature, funcPtr */</span><br><span class="line">    &#123; <span class="string">"isLoggable"</span>,      <span class="string">"(Ljava/lang/String;I)Z"</span>, (void*) android_util_Log_isLoggable &#125;,</span><br><span class="line">    &#123; <span class="string">"println_native"</span>,  <span class="string">"(IILjava/lang/String;Ljava/lang/String;)I"</span>, (void*) android_util_Log_println_native &#125;,</span><br><span class="line">    &#123; <span class="string">"logger_entry_max_payload_native"</span>,  <span class="string">"()I"</span>, (void*) android_util_Log_logger_entry_max_payload_native &#125;,</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure></p>
+<p>JNINativeMethod是前面提到的一个结构体，这个结构体表示一个实现的本地方法。这个结构体在jni.h文件中定义，内容如下：<br><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">typedef struct &#123;</span><br><span class="line">    const char* name;</span><br><span class="line">    const char* signature;</span><br><span class="line">    void*       fnPtr;</span><br><span class="line">&#125; JNINativeMethod;</span><br></pre></td></tr></table></figure></p>
+<p>它有三个指针变量，第一个是字符型指针，可以表示一个字符串，即native方法的名称；第二个也是字符型指针，同样可以表示一个字符串，代表这个native方法的参数和返回值（有特殊的表示方法）；第三个是一个未指定类型指针，表示一个函数指针，指向这个native方法对应的jni函数。</p>
+<p>有了对JNINativeMethod了解，就可以理解<code>println_native</code>在<code>android_util_Log.cpp</code>源文件中的含义了。其对应jni实现函数是<code>android_util_Log_println_native()</code>。在jni实现函数中，又调用了<code>__android_log_buf_write()</code>这个方法，<code>__android_log_buf_write</code>是本地框架层（非Java框架层）基础的C库之上，Android最底层的本地Log库。<br>Log库的源码路径为：<br>头文件：<code>system/core/include/cutils/log.h</code>。<br>源文件：<code>system/core/liblog</code>。<br>编译后会生成liblog.so动态库和liblog.a静态库。</p>
+<ol start="3">
+<li><strong>JNI的注册</strong><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">int register_android_util_Log(JNIEnv* env)</span><br><span class="line">&#123;</span><br><span class="line">    jclass clazz = FindClassOrDie(env, <span class="string">"android/util/Log"</span>);</span><br><span class="line"></span><br><span class="line">    levels.verbose = env-&gt;GetStaticIntField(clazz, GetStaticFieldIDOrDie(env, clazz, "VERBOSE", "I"));</span><br><span class="line">    levels.debug = env-&gt;GetStaticIntField(clazz, GetStaticFieldIDOrDie(env, clazz, "DEBUG", "I"));</span><br><span class="line">    levels.info = env-&gt;GetStaticIntField(clazz, GetStaticFieldIDOrDie(env, clazz, "INFO", "I"));</span><br><span class="line">    levels.warn = env-&gt;GetStaticIntField(clazz, GetStaticFieldIDOrDie(env, clazz, "WARN", "I"));</span><br><span class="line">    levels.error = env-&gt;GetStaticIntField(clazz, GetStaticFieldIDOrDie(env, clazz, "ERROR", "I"));</span><br><span class="line">    levels.assert = env-&gt;GetStaticIntField(clazz, GetStaticFieldIDOrDie(env, clazz, "ASSERT", "I"));</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> RegisterMethodsOrDie(env, <span class="string">"android/util/Log"</span>, gMethods, NELEM(gMethods));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+<p>这是<code>android_util_Log.cpp</code>源文件中对jni的注册，可以看到RegisterMethodsOrDie()这个方法的调用，传入了我们前面看到的gMethods数组，进行JNI注册。到这里结束了吗？确实第一次看到这里的时候，以为就此结束了。然而，<strong>是谁调用了register_android_util_Log()这个方法？在RegisterMethodsOrDie()这个函数里面又做了什么呢？</strong></p>
+<ol start="4">
+<li><strong>register_android_util_Log()函数的调用</strong><br><code>register_android_util_Log()</code>这个方法只在<code>android_util_Log.cpp</code>源文件中进行定义，需要找到谁对它进行了调用，才好进一步理解Log的JNI的注册过程。Android源码环境有一个非常不错的方法，可以通过字符串，找到出现过的文件。<br>指令：<code>cgrep &#39;register_android_util_Log&#39;</code><br>类似于：<code>find . -type f -name &quot;*.cpp&quot; | xargs grep &quot;register_android_util_Log&quot;</code><br>通过结果可以发现一个AndoridRuntime.cpp，这是个什么鬼？只能说它很强，是系统运行时的工具类，为Android的运行提供支持。JNI的部分封装也在这个类中。<br>源码路径：<br><code>/frameworks/base/include/android_runtime/AndroidRuntime.h</code>。<br><code>/frameworsk/base/core/jni/AndroidRuntime.cpp</code>。<br>可以发现，它也是在/frameworsk/base/core/jni目录下，说明也是在libandroid_runtime.so动态库中。</li>
+</ol>
+<p>在AndroidRuntime.cpp源文件gRegJNI数组中，发现了<code>register_android_util_Log</code>方法。<br><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">static const RegJNIRec gRegJNI[] = &#123;</span><br><span class="line">    REG_JNI(register_com_android_internal_os_RuntimeInit),</span><br><span class="line">    REG_JNI(register_android_os_SystemClock),</span><br><span class="line">    REG_JNI(register_android_util_EventLog),</span><br><span class="line">    REG_JNI(register_android_util_Log),</span><br><span class="line">    REG_JNI(register_android_util_MemoryIntArray),</span><br><span class="line">    //省略</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>然后，又在AndroidRuntime.cpp源文件的<strong>AndroidRuntime::startReg()</strong>这个方法中，使用了gRegJNI这个数组。<br><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line">/*</span><br><span class="line"> * Register android native functions <span class="keyword">with</span> the VM.</span><br><span class="line"> */</span><br><span class="line">/*static*/ int AndroidRuntime::startReg(JNIEnv* env)</span><br><span class="line">&#123;</span><br><span class="line">    ATRACE_NAME(<span class="string">"RegisterAndroidNatives"</span>);</span><br><span class="line">    /*</span><br><span class="line">     * This hook causes all future threads created <span class="keyword">in</span> this process to be</span><br><span class="line">     * attached to the JavaVM.  (This needs to go away <span class="keyword">in</span> favor of JNI</span><br><span class="line">     * Attach calls.)</span><br><span class="line">     */</span><br><span class="line">    androidSetCreateThreadFunc((android_create_thread_fn) javaCreateThreadEtc);</span><br><span class="line"></span><br><span class="line">    ALOGV(<span class="string">"--- registering native functions ---\n"</span>);</span><br><span class="line"></span><br><span class="line">    /*</span><br><span class="line">     * Every <span class="string">"register"</span> function calls one <span class="keyword">or</span> more things that <span class="keyword">return</span></span><br><span class="line">     * a local reference (e.g. FindClass).  Because we haven<span class="string">'t really</span></span><br><span class="line"><span class="string">     * started the VM yet, they'</span>re all getting stored <span class="keyword">in</span> the base frame</span><br><span class="line">     * <span class="keyword">and</span> never released.  Use Push/Pop to manage the storage.</span><br><span class="line">     */</span><br><span class="line">    env-&gt;PushLocalFrame(200);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (register_jni_procs(gRegJNI, NELEM(gRegJNI), env) &lt; <span class="number">0</span>) &#123;</span><br><span class="line">        env-&gt;PopLocalFrame(NULL);</span><br><span class="line">        <span class="keyword">return</span> <span class="number">-1</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    env-&gt;PopLocalFrame(NULL);</span><br><span class="line"></span><br><span class="line">    //createJavaThread(<span class="string">"fubar"</span>, quickTest, (void*) <span class="string">"hello"</span>);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>按源代码注释的意思是，这里在向虚拟机注册本地方法。同样在AndroidRuntime.cpp源文件中，AndroidRuntime::start()中又调用了AndroidRuntime::startReg()，到这里，需要继续往下看，就得找找<strong>是谁调用了AndroidRuntime::start()</strong>方法。然而，要想知道谁调用了它，已经涉及到zygote这一块的知识。</p>
+<ol start="5">
+<li><strong>zygote</strong><br>zygote是通过init进程读取init.rc启动的一个守护进程的名称。如果从最下面开始说，得再介绍一下Android启动流程的本地阶段，这一块，属于扩充了解。</li>
+</ol>
+<p>Android启动流程的本地阶段：</p>
+<ul>
+<li>BootLoader运行，Linux通用内容。</li>
+<li>Linux内核运行，Linux通用内容，通常是二进制形式代码形式存在。</li>
+<li>内核加载根文件系统，Linux通用内容。</li>
+<li>init进程运行，用户空间的第一个进程。</li>
+<li>运行init.rc脚本。</li>
+<li>加载system和date文件系统。</li>
+<li>运行各种服务，主要为各种守护进程。</li>
+</ul>
+<p>本地部分启动完成，形成一系列守护进程，其中名称为zygote的守护进程，将继续完成Java部分的初始化。</p>
+<p>Java部分的启动流程：</p>
+<ul>
+<li>从本地可执行程序运行名为zygote的守护进程。</li>
+<li>zygote运行ZygoteInit（进入Java程序）。</li>
+<li>ZygoteInit运行SystemServer（Java类），并分裂出新的进程。</li>
+<li>SystemServer首先运行libandroid_servers.so库当中的初始化（进入本地程序）。</li>
+<li>执行libanroid_servers.so当中的系统初始化。</li>
+<li>SystemServer中的Java初始化再次被调用（再入Java程序）。</li>
+<li>建立ServerThread线程。</li>
+<li>ServerThread线程建立各个服务，然后进入循环。</li>
+<li>ActivityManagerService在启动结束发送相关信息。</li>
+<li>各个Java应用程序运行。</li>
+</ul>
+<p>这些是引用资料书中的知识，想详细了解，可以看看《Android核心原理及系统级应用高效开发》或《深入理解Android系统》。回到我们的zygote进程，init.rc中包含了一个init.${ro.zygote}.rc。<br>init.rc和init.${ro.zygote}.rc源码路径：<code>/system/core/rootdir</code>。</p>
+<p>在init.zygote32.rc中，相关内容如下：<br><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">service zygote /system/bin/app_process -Xzygote /system/bin --zygote --start-system-server</span><br><span class="line">    <span class="class"><span class="keyword">class</span> <span class="title">main</span></span></span><br><span class="line"><span class="class">    <span class="title">socket</span> <span class="title">zygote</span> <span class="title">stream</span> 660 <span class="title">root</span> <span class="title">system</span></span></span><br><span class="line"><span class="class">    <span class="title">onrestart</span> <span class="title">write</span> /<span class="title">sys</span>/<span class="title">android_power</span>/<span class="title">request_state</span> <span class="title">wake</span></span></span><br><span class="line"><span class="class">    <span class="title">onrestart</span> <span class="title">write</span> /<span class="title">sys</span>/<span class="title">power</span>/<span class="title">state</span> <span class="title">on</span></span></span><br><span class="line"><span class="class">    <span class="title">onrestart</span> <span class="title">restart</span> <span class="title">audioserver</span></span></span><br><span class="line"><span class="class">    <span class="title">onrestart</span> <span class="title">restart</span> <span class="title">cameraserver</span></span></span><br><span class="line"><span class="class">    <span class="title">onrestart</span> <span class="title">restart</span> <span class="title">media</span></span></span><br><span class="line"><span class="class">    <span class="title">onrestart</span> <span class="title">restart</span> <span class="title">netd</span></span></span><br><span class="line"><span class="class">    <span class="title">writepid</span> /<span class="title">dev</span>/<span class="title">cpuset</span>/<span class="title">foreground</span>/<span class="title">tasks</span></span></span><br></pre></td></tr></table></figure></p>
+<p>这个是Android系统中的特殊语法，它启动了一个名称为zygote的进程，也就是<code>/system/bin/app_process</code>这个可执行程序。<br>源码路径为：<code>/frameworks/base/cmds/app_process</code>。<br>在这个目录下，有一个<code>app_main.cpp</code>的源文件，其中相关的代码如下：<br><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">// 省略</span><br><span class="line"><span class="keyword">if</span> (zygote) &#123;</span><br><span class="line">    runtime.start(<span class="string">"com.android.internal.os.ZygoteInit"</span>, args, zygote);</span><br><span class="line">&#125; <span class="keyword">else</span> <span class="keyword">if</span> (className) &#123;</span><br><span class="line">    runtime.start(<span class="string">"com.android.internal.os.RuntimeInit"</span>, args, zygote);</span><br><span class="line">&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">    fprintf(stderr, <span class="string">"Error: no class name or --zygote supplied.\n"</span>);</span><br><span class="line">    app_usage();</span><br><span class="line">    LOG_ALWAYS_FATAL(<span class="string">"app_process: no class name or --zygote supplied."</span>);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">10</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>在<code>app_main.cpp</code>源文件中，有一个AppRuntime的类，它继承了AndroidRuntime。runtime是AppRuntime类的一个实例，runtime.start()相当于调用了AndroidRuntime::start()这个方法，至此，前后就连接起来了。概括的说，系统启动zygote进程时，会调用AndroidRuntime::start()方法，接着调用AndroidRuntime::startReg()，然后调用到了<code>register_android_util_Log()</code>这个方法。剩下最后一个问题，<code>register_android_util_Log()</code>被调用后，在它方法体中的<strong>RegisterMethodsOrDie()函数做了什么？</strong></p>
+<ol start="6">
+<li><strong>RegisterMethodsOrDie()函数</strong><br>RegisterMethodsOrDie()这个方法是<code>/frameworks/base/core/jni/core_jni_helpers.h</code>中声明的一个方法。<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">static inline int RegisterMethodsOrDie(JNIEnv* env, const char* className,</span><br><span class="line">                                       const JNINativeMethod* gMethods, int numMethods) &#123;</span><br><span class="line">    int res = AndroidRuntime::registerNativeMethods(env, className, gMethods, numMethods);</span><br><span class="line">    LOG_ALWAYS_FATAL_IF(res &lt; <span class="number">0</span>, <span class="string">"Unable to register native methods."</span>);</span><br><span class="line">    <span class="keyword">return</span> res;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+<p>在其中我们可以看到，其实又回到了AndroidRuntime这个类，调用了它的registerNativeMethods()方法，并最终调用了jniRegisterNativeMethods()进行本地方法的注册。而jniRegisterNativeMethods()是/libnativehelper/JNIHelp.cpp源文件中的方法，它里面内容为：<br><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line">extern <span class="string">"C"</span> int jniRegisterNativeMethods(C_JNIEnv* env, const char* className,</span><br><span class="line">    const JNINativeMethod* gMethods, int numMethods)</span><br><span class="line">&#123;</span><br><span class="line">    JNIEnv* e = reinterpret_cast&lt;JNIEnv*&gt;(env);</span><br><span class="line"></span><br><span class="line">    ALOGV(<span class="string">"Registering %s's %d native methods..."</span>, className, numMethods);</span><br><span class="line"></span><br><span class="line">    scoped_local_ref&lt;jclass&gt; c(env, findClass(env, className));</span><br><span class="line">    <span class="keyword">if</span> (c.get() == NULL) &#123;</span><br><span class="line">        char* tmp;</span><br><span class="line">        const char* msg;</span><br><span class="line">        <span class="keyword">if</span> (asprintf(&amp;tmp,</span><br><span class="line">                     <span class="string">"Native registration unable to find class '%s'; aborting..."</span>,</span><br><span class="line">                     className) == <span class="number">-1</span>) &#123;</span><br><span class="line">            // Allocation failed, <span class="keyword">print</span> default warning.</span><br><span class="line">            msg = <span class="string">"Native registration unable to find class; aborting..."</span>;</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            msg = tmp;</span><br><span class="line">        &#125;</span><br><span class="line">        e-&gt;FatalError(msg);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    if ((*env)-&gt;RegisterNatives(e, c.get(), gMethods, numMethods) &lt; 0) &#123;</span><br><span class="line">        char* tmp;</span><br><span class="line">        const char* msg;</span><br><span class="line">        <span class="keyword">if</span> (asprintf(&amp;tmp, <span class="string">"RegisterNatives failed for '%s'; aborting..."</span>, className) == <span class="number">-1</span>) &#123;</span><br><span class="line">            // Allocation failed, <span class="keyword">print</span> default warning.</span><br><span class="line">            msg = <span class="string">"RegisterNatives failed; aborting..."</span>;</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            msg = tmp;</span><br><span class="line">        &#125;</span><br><span class="line">        e-&gt;FatalError(msg);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>这段代码可以看出，通过调用(*env)的RegisterNatives指针函数，进行了JNI注册。所以最后的动作是交给了JNINativeInterface结构体所表示的JNI环境执行。当在Java层调用native方法时，不需要依据native方法包和名称寻找对应的JNI函数。而是可以通过已经注册的映射关系，快速找到对应的JNI函数的指针，从而开始函数调用，大大提高执行效率。</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2018/09/03/Framework_jni_1/" data-id="cjllstdb50005idfsk9ltqftd" class="article-share-link">Share</a>
+      
+      
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+  
+    <a href="/2018/08/04/Android_DispatchMotionEvent2/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">Android事件分发机制（二）</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+
+  
+  <!-- 来必力City版安装代码 -->
+<div id="lv-container" data-id="city" data-uid="MTAyMC8zNTU4Mi8xMjExOA==">
+<script type="text/javascript">
+   (function(d, s) {
+       var j, e = d.getElementsByTagName(s)[0];
+
+       if (typeof LivereTower === 'function') { return; }
+
+       j = d.createElement(s);
+       j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+       j.async = true;
+
+       e.parentNode.insertBefore(j, e);
+   })(document, 'script');
+</script>
+<noscript>为正常使用来必力评论功能请激活JavaScript</noscript>
+</div>
+<!-- City版安装代码已完成 -->
+
+  
+
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+
+  
+    
+
+  
+    
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">归档</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/09/">九月 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/08/">八月 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/07/">七月 2018</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">最新文章</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2018/09/03/Framework_jni_1/">Android Framework层的JNI机制（一）</a>
+          </li>
+        
+          <li>
+            <a href="/2018/08/04/Android_DispatchMotionEvent2/">Android事件分发机制（二）</a>
+          </li>
+        
+          <li>
+            <a href="/2018/08/02/Android_DispatchMotionEvent/">Android事件分发机制（一）</a>
+          </li>
+        
+          <li>
+            <a href="/2018/07/21/Android_7.1.2_boot_anim/">Android 7.1.2源码之修改开机动画</a>
+          </li>
+        
+          <li>
+            <a href="/2018/07/17/Ubuntu_14.04_Android_7.1.2_env_config/">Ubuntu 14.04 Android 7.1.2源码编译</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2018 DerikLPW<br>
+      Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+</nav>
+    
+
+<script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/script.js"></script>
+
+  </div>
+</body>
+</html>

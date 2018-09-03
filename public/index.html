@@ -62,6 +62,226 @@
       <div class="outer">
         <section id="main">
   
+    <article id="post-Framework_jni_1" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2018/09/03/Framework_jni_1/" class="article-date">
+  <time datetime="2018-09-03T03:58:00.173Z" itemprop="datePublished">2018-09-03</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2018/09/03/Framework_jni_1/">Android Framework层的JNI机制（一）</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>JNI（Java Native Interface）Java本地接口。最初对JNI的了解，仅仅停留在Java通过JNI可以实现对C/C++函数的调用。比如，首先在Java中写好native方法。然后在C或C++中文件中，定义一个对应的函数，在这个函数中，实现自己的代码或者调用其他的标准库。最后加载一下生成的动态库，便可以开始使用这个native方法。</p>
+        
+          <p class="article-more-link">
+            <a href="/2018/09/03/Framework_jni_1/#more">Read More</a>
+          </p>
+        
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2018/09/03/Framework_jni_1/" data-id="cjllstdb50005idfsk9ltqftd" class="article-share-link">Share</a>
+      
+      
+    </footer>
+  </div>
+  
+</article>
+
+
+
+
+
+  
+    <article id="post-Android_DispatchMotionEvent2" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2018/08/04/Android_DispatchMotionEvent2/" class="article-date">
+  <time datetime="2018-08-04T00:50:26.865Z" itemprop="datePublished">2018-08-04</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2018/08/04/Android_DispatchMotionEvent2/">Android事件分发机制（二）</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>ViewGroup进行事件分发的过程中，多次把事件传递给了子View，开始View的事件分发。那么，View的事件分发如何进行？<br></p>
+        
+          <p class="article-more-link">
+            <a href="/2018/08/04/Android_DispatchMotionEvent2/#more">Read More</a>
+          </p>
+        
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2018/08/04/Android_DispatchMotionEvent2/" data-id="cjllstdax0001idfsv4cip1dz" class="article-share-link">Share</a>
+      
+      
+    </footer>
+  </div>
+  
+</article>
+
+
+
+
+
+  
+    <article id="post-Android_DispatchMotionEvent" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2018/08/02/Android_DispatchMotionEvent/" class="article-date">
+  <time datetime="2018-08-02T10:34:19.714Z" itemprop="datePublished">2018-08-02</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2018/08/02/Android_DispatchMotionEvent/">Android事件分发机制（一）</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>事件分发机制有点复杂，而且似乎笼罩着一层神秘的面纱。为了揭开它，决定进去源码里面看一看，并把过程记录下来，作为一份笔记。如果对大家理解事件分发机制有所帮助，那是再好不过的事情。首先，将稍微整理事件分发机制中，需要理清的几个问题，然后才开始看源码。<br></p>
+        
+          <p class="article-more-link">
+            <a href="/2018/08/02/Android_DispatchMotionEvent/#more">Read More</a>
+          </p>
+        
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2018/08/02/Android_DispatchMotionEvent/" data-id="cjllstdb40004idfsiwf4ej8f" class="article-share-link">Share</a>
+      
+      
+    </footer>
+  </div>
+  
+</article>
+
+
+
+
+
+  
+    <article id="post-Android_7.1.2_boot_anim" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2018/07/21/Android_7.1.2_boot_anim/" class="article-date">
+  <time datetime="2018-07-21T10:46:57.938Z" itemprop="datePublished">2018-07-21</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2018/07/21/Android_7.1.2_boot_anim/">Android 7.1.2源码之修改开机动画</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>&emsp;&emsp;开机动画是Android系统的UI启动过程中的动画显示，在UI启动完成，看到桌面或者锁屏界面出现后，自动结束。对开机动画的定制比较简单，制作图片就可以完成。开机动画执行者代码路径为：frameworks/base/cmds/bootanimation。它将生成本地程序bootanimation，被init通过init.rc启动。<br></p>
+        
+          <p class="article-more-link">
+            <a href="/2018/07/21/Android_7.1.2_boot_anim/#more">Read More</a>
+          </p>
+        
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2018/07/21/Android_7.1.2_boot_anim/" data-id="cjllstdas0000idfs1awr6tmw" class="article-share-link">Share</a>
+      
+      
+    </footer>
+  </div>
+  
+</article>
+
+
+
+
+
+  
+    <article id="post-Ubuntu_14.04_Android_7.1.2_env_config" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2018/07/17/Ubuntu_14.04_Android_7.1.2_env_config/" class="article-date">
+  <time datetime="2018-07-17T02:54:34.530Z" itemprop="datePublished">2018-07-17</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2018/07/17/Ubuntu_14.04_Android_7.1.2_env_config/">Ubuntu 14.04 Android 7.1.2源码编译</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>&emsp;&emsp;一直想入手Framework，今天终于踏上前进的步伐，从编译环境开始，记录点滴，致多年后的自己。源码的下载这里就暂时不写了，后面有需要再补上去，先介绍环境配置，编译和烧录。</p>
+        
+          <p class="article-more-link">
+            <a href="/2018/07/17/Ubuntu_14.04_Android_7.1.2_env_config/#more">Read More</a>
+          </p>
+        
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2018/07/17/Ubuntu_14.04_Android_7.1.2_env_config/" data-id="cjllstdaz0002idfsg5kd85uk" class="article-share-link">Share</a>
+      
+      
+    </footer>
+  </div>
+  
+</article>
+
+
+
+
+
+  
     <article id="post-linearLayout" class="article article-type-post" itemscope itemprop="blogPost">
   <div class="article-meta">
     <a href="/2018/07/12/linearLayout/" class="article-date">
@@ -93,51 +313,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://yoursite.com/2018/07/12/linearLayout/" data-id="cjjibsf1m00017rfsolmema5k" class="article-share-link">Share</a>
-      
-      
-    </footer>
-  </div>
-  
-</article>
-
-
-
-
-
-  
-    <article id="post-hello-world" class="article article-type-post" itemscope itemprop="blogPost">
-  <div class="article-meta">
-    <a href="/2018/07/12/hello-world/" class="article-date">
-  <time datetime="2018-07-12T08:53:12.563Z" itemprop="datePublished">2018-07-12</time>
-</a>
-    
-  </div>
-  <div class="article-inner">
-    
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2018/07/12/hello-world/">Hello World</a>
-    </h1>
-  
-
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <p>Welcome to <a href="https://hexo.io/" target="_blank" rel="noopener">Hexo</a>! This is your very first post. Check <a href="https://hexo.io/docs/" target="_blank" rel="noopener">documentation</a> for more info. If you get any problems when using Hexo, you can find the answer in <a href="https://hexo.io/docs/troubleshooting.html" target="_blank" rel="noopener">troubleshooting</a> or you can ask me on <a href="https://github.com/hexojs/hexo/issues" target="_blank" rel="noopener">GitHub</a>.<br></p>
-        
-          <p class="article-more-link">
-            <a href="/2018/07/12/hello-world/#more">Read More</a>
-          </p>
-        
-      
-    </div>
-    <footer class="article-footer">
-      <a data-url="http://yoursite.com/2018/07/12/hello-world/" data-id="cjjibsf1g00007rfs9alok786" class="article-share-link">Share</a>
+      <a data-url="http://yoursite.com/2018/07/12/linearLayout/" data-id="cjllstdb00003idfs0l42vt89" class="article-share-link">Share</a>
       
       
     </footer>
@@ -187,7 +363,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://yoursite.com/2018/07/12/java8/" data-id="cjjibsf1v00027rfsktna9ak2" class="article-share-link">Share</a>
+      <a data-url="http://yoursite.com/2018/07/12/java8/" data-id="cjllstdb60006idfsd0ka5o0x" class="article-share-link">Share</a>
       
       
     </footer>
@@ -217,7 +393,7 @@
   <div class="widget-wrap">
     <h3 class="widget-title">归档</h3>
     <div class="widget">
-      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/07/">七月 2018</a></li></ul>
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/09/">九月 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/08/">八月 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/07/">七月 2018</a></li></ul>
     </div>
   </div>
 
@@ -230,15 +406,23 @@
       <ul>
         
           <li>
-            <a href="/2018/07/12/linearLayout/">LinearLayout android:layout_weight属性用法总结</a>
+            <a href="/2018/09/03/Framework_jni_1/">Android Framework层的JNI机制（一）</a>
           </li>
         
           <li>
-            <a href="/2018/07/12/hello-world/">Hello World</a>
+            <a href="/2018/08/04/Android_DispatchMotionEvent2/">Android事件分发机制（二）</a>
           </li>
         
           <li>
-            <a href="/2018/07/12/java8/">Java8的几个重要特性介绍</a>
+            <a href="/2018/08/02/Android_DispatchMotionEvent/">Android事件分发机制（一）</a>
+          </li>
+        
+          <li>
+            <a href="/2018/07/21/Android_7.1.2_boot_anim/">Android 7.1.2源码之修改开机动画</a>
+          </li>
+        
+          <li>
+            <a href="/2018/07/17/Ubuntu_14.04_Android_7.1.2_env_config/">Ubuntu 14.04 Android 7.1.2源码编译</a>
           </li>
         
       </ul>

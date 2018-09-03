@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>Android事件分发机制（二） | Derik的个人博客</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="ViewGroup进行事件分发的过程中，多次把事件传递给了子View，开始View的事件分发。那么，View的事件分发如何进行？">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Android事件分发机制（二）">
+<meta property="og:url" content="http://yoursite.com/2018/08/04/Android_DispatchMotionEvent2/index.html">
+<meta property="og:site_name" content="Derik的个人博客">
+<meta property="og:description" content="ViewGroup进行事件分发的过程中，多次把事件传递给了子View，开始View的事件分发。那么，View的事件分发如何进行？">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2018-08-04T00:50:26.837Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Android事件分发机制（二）">
+<meta name="twitter:description" content="ViewGroup进行事件分发的过程中，多次把事件传递给了子View，开始View的事件分发。那么，View的事件分发如何进行？">
+  
+    <link rel="alternate" href="/atom.xml" title="Derik的个人博客" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  <link rel="stylesheet" href="/css/style.css">
+  
+
+</head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">Derik的个人博客</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="搜索"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://yoursite.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+      <div class="outer">
+        <section id="main"><article id="post-Android_DispatchMotionEvent2" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2018/08/04/Android_DispatchMotionEvent2/" class="article-date">
+  <time datetime="2018-08-04T00:50:26.865Z" itemprop="datePublished">2018-08-04</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      Android事件分发机制（二）
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>ViewGroup进行事件分发的过程中，多次把事件传递给了子View，开始View的事件分发。那么，View的事件分发如何进行？<br><a id="more"></a><br>关于View事件分发的几个问题：</p>
+<ol>
+<li>View进行事件分发的目的？</li>
+</ol>
+<p>确定事件能否被消费，以及响应事件具体的类型。</p>
+<ol start="2">
+<li>View什么情况下会消费事件？</li>
+</ol>
+<p>（1）View设置的OnTouchListener，返回true。</p>
+<p>（2）重写View的onTouchEvent()方法时，返回true。</p>
+<p>（3）View为可点击状态，默认消费事件。例如Button，CheckBox，ImageButton等。</p>
+<ol start="3">
+<li>View进行事件响应的顺序？</li>
+</ol>
+<p>OnTouchListener –&gt; onTouchEvent –&gt; OnLongClickListener –&gt; OnClickListener。</p>
+<h3 id="View的事件分发"><a href="#View的事件分发" class="headerlink" title="View的事件分发"></a>View的事件分发</h3><p>View的事件分发主要涉及两个方法：</p>
+<p>（1）public boolean dispatchTouchEvent(MotionEvent event)</p>
+<p>（2）public boolean onTouchEvent(MotionEvent event)</p>
+<ol>
+<li>检测是否设置OnTouchListener<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">ListenerInfo li = mListenerInfo;</span><br><span class="line"><span class="keyword">if</span> (li != null &amp;&amp; li.mOnTouchListener != null</span><br><span class="line">        &amp;&amp; (mViewFlags &amp; ENABLED_MASK) == ENABLED</span><br><span class="line">        &amp;&amp; li.mOnTouchListener.onTouch(this, event)) &#123;</span><br><span class="line">    result = true;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+<p>先检测View是否有设置OnTouchListener，如果有设置，调用监听器的回调方法。回调方法返回true，消费事件，即view.dispatchTouchEvent()值为true，相当于告诉ViewGroup，当前事件被消费了。</p>
+<ol start="2">
+<li>调用View自身的onTouchEvent()方法<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (!result &amp;&amp; onTouchEvent(event)) &#123;</span><br><span class="line">    result = true;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+<p>View未设置OnTouchListener，或OnTouchListener中onTouch()回调方法返回值为false，则继续调用View自身的onTouchEvent()方法。如果onTouchEvent()方法返回true，即消费了事件，返回false，未消费事件。</p>
+<p>事件传递给onTouchEvent()方法后，需要在其中确认事件类型的响应顺序，下面进入这个方法：</p>
+<p>（1）判断View使能<br><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> ((viewFlags &amp; ENABLED_MASK) == DISABLED) &#123;</span><br><span class="line">    <span class="keyword">if</span> (action == MotionEvent.ACTION_UP &amp;&amp; (mPrivateFlags &amp; PFLAG_PRESSED) != <span class="number">0</span>) &#123;</span><br><span class="line">        setPressed(false);</span><br><span class="line">    &#125;</span><br><span class="line">    // A disabled view that <span class="keyword">is</span> clickable still consumes the touch</span><br><span class="line">    // events, it just doesn<span class="string">'t respond to them.</span></span><br><span class="line"><span class="string">    return (((viewFlags &amp; CLICKABLE) == CLICKABLE</span></span><br><span class="line"><span class="string">            || (viewFlags &amp; LONG_CLICKABLE) == LONG_CLICKABLE)</span></span><br><span class="line"><span class="string">            || (viewFlags &amp; CONTEXT_CLICKABLE) == CONTEXT_CLICKABLE);</span></span><br><span class="line"><span class="string">&#125;</span></span><br></pre></td></tr></table></figure></p>
+<p>View为DISABLED，被禁用，且不可点击时，直接返回false，告诉ViewGroup，自己没有消费事件。但如果被禁用，却是可点击的（点击，长点击等），依然会返回true。这种情况下View什么也没做，依然把事件消费了。</p>
+<p>（2）View未被禁用，继续处理事件<br><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (clickable || (viewFlags &amp; TOOLTIP) == TOOLTIP) &#123;</span><br><span class="line">//省略</span><br><span class="line"><span class="keyword">return</span> true;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>只要View是clickable，或者悬停、长按时可显示工具提示，就会返回true，消费事件。</p>
+<p>（3）关于点击和长按事件的处理<br><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (!mHasPerformedLongPress &amp;&amp; !mIgnoreNextUpEvent) &#123;</span><br><span class="line">    // This <span class="keyword">is</span> a tap, so remove the longpress check</span><br><span class="line">    removeLongPressCallback();</span><br><span class="line"></span><br><span class="line">    // Only perform take click actions <span class="keyword">if</span> we were <span class="keyword">in</span> the pressed state</span><br><span class="line">    <span class="keyword">if</span> (!focusTaken) &#123;</span><br><span class="line">        // Use a Runnable <span class="keyword">and</span> post this rather than calling</span><br><span class="line">        // performClick directly. This lets other visual state</span><br><span class="line">        // of the view update before click actions start.</span><br><span class="line">        <span class="keyword">if</span> (mPerformClick == null) &#123;</span><br><span class="line">            mPerformClick = new PerformClick();</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">if</span> (!post(mPerformClick)) &#123;</span><br><span class="line">            performClick();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>在手指抬起，View收到ACTION_UP时，先检测是否是长按。如果不是长按，则执行removeLongPressCallback()，移除长按的CheckForLongPress对象，系统不会对长按进行响应。否则，执行performClick()，开始调用点击事件监听器中的回调方法，进行事件响应。</p>
+<h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p>ViewGroup拿到事件后，先调用了自己的onInterceptTouchEvent()判断是否要进行拦截。如果拦截，则会将ViewGroup当成View进行事件分发。不拦截，则遍历其中的子View，挨个询问里面的子View有没有要消费事件的。消费，则事件传递结束，不消费，传递给下一个View，都不消费，则又传回到ViewGroup，把自己当成View进行事件分发。在ViewGroup当成View进行事件分发的时候，若没有消进行消费，这次事件被丢弃。事件传递的整个过程看起来像一个回路，是一个经典的责任链式设计模式。</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2018/08/04/Android_DispatchMotionEvent2/" data-id="cjllstdax0001idfsv4cip1dz" class="article-share-link">Share</a>
+      
+      
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2018/09/03/Framework_jni_1/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Newer</strong>
+      <div class="article-nav-title">
+        
+          Android Framework层的JNI机制（一）
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2018/08/02/Android_DispatchMotionEvent/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">Android事件分发机制（一）</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+
+  
+  <!-- 来必力City版安装代码 -->
+<div id="lv-container" data-id="city" data-uid="MTAyMC8zNTU4Mi8xMjExOA==">
+<script type="text/javascript">
+   (function(d, s) {
+       var j, e = d.getElementsByTagName(s)[0];
+
+       if (typeof LivereTower === 'function') { return; }
+
+       j = d.createElement(s);
+       j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+       j.async = true;
+
+       e.parentNode.insertBefore(j, e);
+   })(document, 'script');
+</script>
+<noscript>为正常使用来必力评论功能请激活JavaScript</noscript>
+</div>
+<!-- City版安装代码已完成 -->
+
+  
+
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+
+  
+    
+
+  
+    
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">归档</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/09/">九月 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/08/">八月 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/07/">七月 2018</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">最新文章</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2018/09/03/Framework_jni_1/">Android Framework层的JNI机制（一）</a>
+          </li>
+        
+          <li>
+            <a href="/2018/08/04/Android_DispatchMotionEvent2/">Android事件分发机制（二）</a>
+          </li>
+        
+          <li>
+            <a href="/2018/08/02/Android_DispatchMotionEvent/">Android事件分发机制（一）</a>
+          </li>
+        
+          <li>
+            <a href="/2018/07/21/Android_7.1.2_boot_anim/">Android 7.1.2源码之修改开机动画</a>
+          </li>
+        
+          <li>
+            <a href="/2018/07/17/Ubuntu_14.04_Android_7.1.2_env_config/">Ubuntu 14.04 Android 7.1.2源码编译</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2018 DerikLPW<br>
+      Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+</nav>
+    
+
+<script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/script.js"></script>
+
+  </div>
+</body>
+</html>

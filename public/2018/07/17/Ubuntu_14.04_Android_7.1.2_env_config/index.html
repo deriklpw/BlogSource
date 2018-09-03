@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>Ubuntu 14.04 Android 7.1.2源码编译 | Derik的个人博客</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="&amp;emsp;&amp;emsp;一直想入手Framework，今天终于踏上前进的步伐，从编译环境开始，记录点滴，致多年后的自己。源码的下载这里就暂时不写了，后面有需要再补上去，先介绍环境配置，编译和烧录。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Ubuntu 14.04 Android 7.1.2源码编译">
+<meta property="og:url" content="http://yoursite.com/2018/07/17/Ubuntu_14.04_Android_7.1.2_env_config/index.html">
+<meta property="og:site_name" content="Derik的个人博客">
+<meta property="og:description" content="&amp;emsp;&amp;emsp;一直想入手Framework，今天终于踏上前进的步伐，从编译环境开始，记录点滴，致多年后的自己。源码的下载这里就暂时不写了，后面有需要再补上去，先介绍环境配置，编译和烧录。">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2018-07-17T02:54:34.490Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Ubuntu 14.04 Android 7.1.2源码编译">
+<meta name="twitter:description" content="&amp;emsp;&amp;emsp;一直想入手Framework，今天终于踏上前进的步伐，从编译环境开始，记录点滴，致多年后的自己。源码的下载这里就暂时不写了，后面有需要再补上去，先介绍环境配置，编译和烧录。">
+  
+    <link rel="alternate" href="/atom.xml" title="Derik的个人博客" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  <link rel="stylesheet" href="/css/style.css">
+  
+
+</head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">Derik的个人博客</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="搜索"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://yoursite.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+      <div class="outer">
+        <section id="main"><article id="post-Ubuntu_14.04_Android_7.1.2_env_config" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2018/07/17/Ubuntu_14.04_Android_7.1.2_env_config/" class="article-date">
+  <time datetime="2018-07-17T02:54:34.530Z" itemprop="datePublished">2018-07-17</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      Ubuntu 14.04 Android 7.1.2源码编译
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>&emsp;&emsp;一直想入手Framework，今天终于踏上前进的步伐，从编译环境开始，记录点滴，致多年后的自己。源码的下载这里就暂时不写了，后面有需要再补上去，先介绍环境配置，编译和烧录。</p>
+<a id="more"></a>
+<h1 id="一、安装Open-JDK8"><a href="#一、安装Open-JDK8" class="headerlink" title="一、安装Open JDK8"></a>一、安装Open JDK8</h1><ol>
+<li><p>增加更新源仓库</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ sudo add-apt-repository ppa:openjdk-r/ppa</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>更新</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ sudo apt-get update</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>安装</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ sudo apt-get install openjdk<span class="number">-8</span>-jdk</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>配置环境变量，可以选择不同地方进行配置，~/.bashrc，/etc/profile，或/etc/environment</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ sudo gedit ~/.bashrc</span><br></pre></td></tr></table></figure>
+<p> 在其最后面添加如下环境变量</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">export JAVA_HOME=/usr/lib/jvm/java<span class="number">-8</span>-openjdk-amd64</span><br><span class="line">export JRE_HOME=$&#123;JAVA_HOME&#125;/jre</span><br><span class="line">export CLASSPATH=.:$&#123;JAVA_HOME&#125;/lib:$&#123;JRE_HOME&#125;/lib</span><br><span class="line">export ANDROID_SDK=SDK的安装路径</span><br><span class="line">export PATH=$&#123;JAVA_HOME&#125;/bin:$&#123;ANDROID_SDK&#125;/platform-tools:$&#123;ANDROID_SDK&#125;/tools:$PATH</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>更新导入，或者重启终端</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ source ~/.bashrc</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>查看java版本信息</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">$ java -version</span><br><span class="line">openjdk version <span class="string">"1.8.0_91"</span></span><br><span class="line">OpenJDK Runtime Environment (build <span class="number">1.8</span><span class="number">.0</span>_91<span class="number">-8</span>u91-b14<span class="number">-0</span>ubuntu4~<span class="number">12.04</span>-b14)</span><br><span class="line">OpenJDK <span class="number">64</span>-Bit Server VM (build <span class="number">25.91</span>-b14, mixed mode)</span><br></pre></td></tr></table></figure>
+<p> 显示如上信息，说明配置成功</p>
+</li>
+<li><p>如果有多个java版本，可以设置默认java版本<br>例如，再安装了一个java7</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">$ sudo update-alternatives --install /usr/bin/java java /usr/lib/jvm/java<span class="number">-7</span>-openjdk-amd64/bin/java <span class="number">1070</span></span><br><span class="line">$ sudo update-alternatives --install /usr/bin/javac javac /usr/lib/jvm/java<span class="number">-7</span>-openjdk-amd64/bin/javac <span class="number">1070</span></span><br><span class="line"></span><br><span class="line">$ sudo update-alternatives --install /usr/bin/java java /usr/lib/jvm/java<span class="number">-8</span>-openjdk-amd64/bin/java <span class="number">600</span></span><br><span class="line">$ sudo update-alternatives --install /usr/bin/javac javac /usr/lib/jvm/java<span class="number">-8</span>-openjdk-amd64/bin/javac <span class="number">600</span></span><br></pre></td></tr></table></figure>
+<p> 此时，可查看当前各种JDK版本和配置默认java版本：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ sudo update-alternatives --config java</span><br><span class="line">$ sudo update-alternatives --config javac</span><br></pre></td></tr></table></figure>
+<p> 到这里，Java OpenJdk安装好了，接下来是安装编译时需要的各种依赖包。</p>
+</li>
+</ol>
+<h1 id="二、安装依赖包"><a href="#二、安装依赖包" class="headerlink" title="二、安装依赖包"></a>二、安装依赖包</h1><ul>
+<li>搜集的需要安装的依赖包如下:<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ sudo apt-get install git-core gnupg flex bison gperf build-essential zip curl zlib1g-dev libc6-dev lib32ncurses5-dev x11proto-core-dev libx11-dev lib32readline-gplv2-dev lib32z1-dev libgl1-mesa-dev g++-multilib mingw32 tofrodos python-markdown libxml2-utils xsltproc u-boot-tools lib32z1 lib32ncurses5 lib32bz2<span class="number">-1.0</span> gcc-arm-linux-gnueabi make ncurses-dev gawk python-lunch u-boot-tools</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+<p>&emsp;&emsp;环境基本OK，接下来可以编译了。由于是先配好再来写的这份文档，如果有一两个细节疏忽，网上的前辈们有很多经验帖可以参考，也欢迎在下面评论区留言指正。</p>
+<h1 id="三、开始编译"><a href="#三、开始编译" class="headerlink" title="三、开始编译"></a>三、开始编译</h1><ol>
+<li><p>先编译内核<br>不同的厂商不一样，这里只贴全志的，仅供参考</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line">$ cd lichee</span><br><span class="line">$ ./build.sh config</span><br><span class="line"></span><br><span class="line">Welcome to mkscript setup progress</span><br><span class="line">All available chips:</span><br><span class="line">   <span class="number">0.</span> sun50iw1p1</span><br><span class="line">   <span class="number">1.</span> sun8iw1p1</span><br><span class="line">   <span class="number">2.</span> sun8iw3p1</span><br><span class="line">   <span class="number">3.</span> sun8iw5p1</span><br><span class="line">   <span class="number">4.</span> sun8iw6p1</span><br><span class="line">   <span class="number">5.</span> sun8iw7p1</span><br><span class="line">   <span class="number">6.</span> sun8iw8p1</span><br><span class="line">   <span class="number">7.</span> sun8iw9p1</span><br><span class="line">   <span class="number">8.</span> sun9iw1p1</span><br><span class="line">Choice: <span class="number">4</span></span><br><span class="line">All available platforms:</span><br><span class="line">   <span class="number">0.</span> android</span><br><span class="line">   <span class="number">1.</span> dragonboard</span><br><span class="line">   <span class="number">2.</span> linux</span><br><span class="line">   <span class="number">3.</span> camdroid</span><br><span class="line">   <span class="number">4.</span> secureandroid</span><br><span class="line">Choice: <span class="number">0</span></span><br><span class="line">All available kernel:</span><br><span class="line">   <span class="number">0.</span> linux<span class="number">-3.4</span></span><br><span class="line">Choice: <span class="number">0</span></span><br><span class="line">All available boards:</span><br><span class="line">   <span class="number">0.</span> f1</span><br><span class="line">   <span class="number">1.</span> fpga</span><br><span class="line">   <span class="number">2.</span> n1</span><br><span class="line">   <span class="number">3.</span> perf1_v1_0</span><br><span class="line">   <span class="number">4.</span> perf2_v1_0</span><br><span class="line">   <span class="number">5.</span> perf3_v1_0</span><br><span class="line">   <span class="number">6.</span> qc</span><br><span class="line">Choice: <span class="number">0</span></span><br><span class="line"></span><br><span class="line">$ ./build.sh</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>进入源码根目录，执行源码环境配置文件</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ source build/envsetup.sh</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>执行lunch，选择要编译的板</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ lunch</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>拷贝内核至输出目录</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ extract-bsp</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>开始编译</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ make -j8 //<span class="number">8</span>为线程数，可依据电脑配置设置</span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+<p>编译成功之后，生成的文件会在out/target目录下</p>
+<ol start="6">
+<li>打包成烧录img<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ pack -d</span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+<h1 id="四、烧录"><a href="#四、烧录" class="headerlink" title="四、烧录"></a>四、烧录</h1><p>烧录的方式有两种：</p>
+<ul>
+<li>Windows软件烧录</li>
+<li>fastboot烧录，按区烧录img</li>
+</ul>
+<p>第一种烧录的是上面打包好的img，下载烧录软件即可完成。下面介绍的是第二种情况的烧录：</p>
+<ol>
+<li><p>重启进入烧录模式</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ adb reboot bootloader</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>查看设备</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ fastboot devices</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>如果无驱动，增加驱动</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ sudo vim /etc/udev/rules.d/<span class="number">50</span>-android.rules</span><br></pre></td></tr></table></figure>
+<p> 先lsusb，查看id，在文件中加入ATTR{idVendor}和ATTRS{idProduct}，格式如下</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">SUBSYSTEM==<span class="string">"usb"</span>, ATTR&#123;idVendor&#125;==<span class="string">"0012"</span>, MODE=<span class="string">"0666"</span>, GROUP=<span class="string">"plugdev"</span></span><br><span class="line">SUBSYSTEM==<span class="string">"usb"</span>, ATTR&#123;idVendor&#125;==<span class="string">"1b8e"</span>, ATTRS&#123;idProduct&#125;==<span class="string">"c003"</span>, MODE=<span class="string">"0666"</span>, GROUP=<span class="string">"plugdev"</span></span><br><span class="line">SUBSYSTEM==<span class="string">"usb"</span>, ATTR&#123;idVendor&#125;==<span class="string">"0489"</span>, ATTRS&#123;idProduct&#125;==<span class="string">"0007"</span>, MODE=<span class="string">"0666"</span>, GROUP=<span class="string">"plugdev"</span></span><br><span class="line">SUBSYSTEM==<span class="string">"usb"</span>, ATTR&#123;idVendor&#125;==<span class="string">"18d1"</span>, ATTRS&#123;idProduct&#125;==<span class="string">"4ee7"</span>, MODE=<span class="string">"0666"</span>, GROUP=<span class="string">"plugdev"</span></span><br><span class="line">SUBSYSTEM==<span class="string">"usb"</span>, ATTR&#123;idVendor&#125;==<span class="string">"1f3a"</span>, ATTRS&#123;idProduct&#125;==<span class="string">"1010"</span>, MODE=<span class="string">"0666"</span>, GROUP=<span class="string">"plugdev"</span></span><br></pre></td></tr></table></figure>
+</li>
+<li><p>重启udev</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ sudo service udev restart</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>fastboot devices检测到设备后，开始烧录img</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ fastboot flash boot out/target/product/octopus-f1/boot.img</span><br><span class="line">$ fastboot flash system out/target/product/octopus-f1/system.img</span><br><span class="line">$ fastboot reboot</span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+<h1 id="五、编译错误处理"><a href="#五、编译错误处理" class="headerlink" title="五、编译错误处理"></a>五、编译错误处理</h1><ol>
+<li>内存不足</li>
+</ol>
+<ul>
+<li>修改文件jack-admin<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ sudo gedit ./prebuilts/sdk/tools/jack-admin</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+<p>找到参数JACK_SERVER_VM_ARGUMENTS，修改为<br>JACK_SERVER_VM_ARGUMENTS=”${JACK_SERVER_VM_ARGUMENTS:=-Dfile.encoding=UTF-8 -XX:+TieredCompilation <font color="#ff0000">-Xmx3g</font>}”<br>如果依然提示内存不足，再改大一点。</p>
+<ul>
+<li>重启jack server<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ ./prebuilts/sdk/tools/jack-admin  stop-server</span><br><span class="line">$ ./prebuilts/sdk/tools/jack-admin  start-server</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+<p>&emsp;&emsp;编译烧录上没有很长内容，比较简单，但是在没有自己走一遍之前，免不了有无从下手的感觉，编译烧录成功了，及时记录下相关知识，方便以后查阅，也希望对有相同兴趣爱好的人有所帮助。学无止境，共勉之！</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2018/07/17/Ubuntu_14.04_Android_7.1.2_env_config/" data-id="cjllstdaz0002idfsg5kd85uk" class="article-share-link">Share</a>
+      
+      
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2018/07/21/Android_7.1.2_boot_anim/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Newer</strong>
+      <div class="article-nav-title">
+        
+          Android 7.1.2源码之修改开机动画
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2018/07/12/linearLayout/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">LinearLayout android:layout_weight属性用法总结</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+
+  
+  <!-- 来必力City版安装代码 -->
+<div id="lv-container" data-id="city" data-uid="MTAyMC8zNTU4Mi8xMjExOA==">
+<script type="text/javascript">
+   (function(d, s) {
+       var j, e = d.getElementsByTagName(s)[0];
+
+       if (typeof LivereTower === 'function') { return; }
+
+       j = d.createElement(s);
+       j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+       j.async = true;
+
+       e.parentNode.insertBefore(j, e);
+   })(document, 'script');
+</script>
+<noscript>为正常使用来必力评论功能请激活JavaScript</noscript>
+</div>
+<!-- City版安装代码已完成 -->
+
+  
+
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+
+  
+    
+
+  
+    
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">归档</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/09/">九月 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/08/">八月 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/07/">七月 2018</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">最新文章</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2018/09/03/Framework_jni_1/">Android Framework层的JNI机制（一）</a>
+          </li>
+        
+          <li>
+            <a href="/2018/08/04/Android_DispatchMotionEvent2/">Android事件分发机制（二）</a>
+          </li>
+        
+          <li>
+            <a href="/2018/08/02/Android_DispatchMotionEvent/">Android事件分发机制（一）</a>
+          </li>
+        
+          <li>
+            <a href="/2018/07/21/Android_7.1.2_boot_anim/">Android 7.1.2源码之修改开机动画</a>
+          </li>
+        
+          <li>
+            <a href="/2018/07/17/Ubuntu_14.04_Android_7.1.2_env_config/">Ubuntu 14.04 Android 7.1.2源码编译</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2018 DerikLPW<br>
+      Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+</nav>
+    
+
+<script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/script.js"></script>
+
+  </div>
+</body>
+</html>
